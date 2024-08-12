@@ -1,94 +1,55 @@
-import { Button, Rows, Text, Title, MultilineInput, WordCountDecorator } from "@canva/app-ui-kit";
+import { Button, Rows, Title, MultilineInput } from "@canva/app-ui-kit";
 import { useState } from "react";
 import styles from "styles/components.css";
 import ImagePicker from "./imagepicker";
 
 export const App = () => {
-  const [keywords, setKeywords] = useState<String[]>([])
-  const [newKeyword, setNewKeyword] = useState("")
-  const [imageSelection, setImageSelection] = useState([0])
-  const [isAdding, setIsAdding] = useState(false);
-  const [isImagePicking, setIsImagePicking] = useState(false)
+  const [description, setDescription] = useState("")
+  const [imageurls, setImageurls] = useState<String[]>([])
+
+  const getData = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    return await response.json();
+  }
 
   const onClick = async () => {
-    const url = "http://localhost:3000/api/keywords";
+    console.log("clicked")
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
+      const keywordsjson = await getData(`https://us-east5-imageexplorer-6587c.cloudfunctions.net/keywords?text=${description}`)
+      const images = await getData(`https://us-east5-imageexplorer-6587c.cloudfunctions.net/images?text=${keywordsjson.keywords}`);
 
-      const json = await response.json();
-      setKeywords(json.aggregated_response.candidates[0].content.parts[0].text.split(","))
-      setIsImagePicking(true)
+      setImageurls(images.map(item => item.src));
     } catch (error: any) {
       console.error(error.message);
     }
   }
 
-  const removeKeyword = (indexToRemove) => {
-    setKeywords(keywords.filter((_, index) => index !== indexToRemove));
-  };
-
-  const addKeyword = (event) => {
-    if (event.key === 'Enter' && newKeyword.trim() !== '') {
-      setKeywords([...keywords, newKeyword.trim()]);
-      setNewKeyword('');
-      setIsAdding(false);
-    }
-  };
-
-  if (!isImagePicking) {
-    return (<div className={styles.scrollContainer}>
-      <Rows spacing="2u">
-        <Title>
-          We create Mood boards for you
-        </Title>
-        <MultilineInput
-          autoGrow
-          minRows={3}
-          placeholder="Describe the mood board you envision"
-        />
-        <Button variant="primary" onClick={onClick} stretch>
-          Generate images
-        </Button>
-      </Rows>
-    </div>)
-  }
-
-  return (
-    <div className={styles.scrollContainer}>
-      <div style={customstyles.keywordContainer}>
-        {keywords.map((keyword, index) => (
-          <div key={index} style={customstyles.keyword}>
-            {keyword}
-            <span style={customstyles.deleteIcon} onClick={() => removeKeyword(index)}>✖</span>
-          </div>
-        ))}
-        {isAdding ? (
-          <input
-            type="text"
-            style={customstyles.input}
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            onKeyDown={addKeyword}
-            onBlur={() => {
-              setIsAdding(false);
-              setNewKeyword('');
-            }}
-            autoFocus
-          />
-        ) : (
-          <div style={customstyles.addKeyword} onClick={() => setIsAdding(true)}>
-            +
-          </div>
-        )}
-      </div>
-      <div style={{margin: "8px"}}></div>
-      <ImagePicker imageSelection={imageSelection} setImageSelection={setImageSelection}></ImagePicker>
-      <button style={customstyles.stickyButton}>Create Moodboard</button>
-    </div>
-  );
+  return (<div className={styles.scrollContainer}>
+    <Rows spacing="2u">
+      <Title>
+        Enhance your moodboard
+      </Title>
+      <MultilineInput
+        autoGrow
+        minRows={3}
+        onChange={(value) => setDescription(value)}
+        placeholder="Describe what you envision"
+      />
+      <Button variant="primary" onClick={onClick} stretch>
+        Find images
+      </Button>
+      {
+        imageurls.length > 0 &&
+        <div className={styles.scrollContainer}>
+          <ImagePicker images={imageurls}></ImagePicker>
+        </div>
+      }
+    </Rows>
+  </div>)
 };
 
 
@@ -121,7 +82,7 @@ const customstyles = {
     marginLeft: '8px',
     cursor: 'pointer',
     color: '#ff0000',
-  }, 
+  },
   addKeyword: {
     border: '1px solid #ccc',
     borderRadius: '4px',
@@ -144,7 +105,7 @@ const customstyles = {
     width: '100px',
     height: '30px',  // Ensure this matches the height of other items
     boxSizing: 'border-box', // Ensure padding and borders are included in the height
-  },  
+  },
   stickyButton: {
     position: 'fixed',
     bottom: '20px', // Distance from the bottom of the screen

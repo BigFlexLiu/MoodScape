@@ -40,6 +40,9 @@ const vertex_model = vertex_ai.preview.getGenerativeModel({
 });
 
 exports.keywords = onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', "*")
+  res.set('Access-Control-Allow-Methods', 'GET, POST');
+
   const api_req = {
     contents: [
       { role: 'user', parts: [{"text": req.query.text}] }
@@ -76,6 +79,9 @@ exports.keywords = onRequest(async (req, res) => {
 });
 
 exports.images = onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', "*")
+  res.set('Access-Control-Allow-Methods', 'GET, POST');
+
   const keywordArray = req.query.text.split(',').map(keyword => keyword.trim());
 
   // requesting an image for each keyword

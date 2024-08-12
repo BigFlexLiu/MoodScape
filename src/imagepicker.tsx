@@ -1,34 +1,35 @@
 import React, { useState } from 'react';
+import { addNativeElement } from "@canva/design";
+import { upload } from "@canva/asset";
 
-const ImagePicker = ({imageSelection, setImageSelection}) => {
-    const imgs = [require("assets/images/cat.jpg"), require("assets/images/dog.jpg"), require("assets/images/rabbit.jpg"), require("assets/images/weather.png")]
-
-    // Function to toggle image selection
-    const toggleImageSelection = (index) => {
-        if (imageSelection.includes(index)) {
-            setImageSelection(imageSelection.filter((value) => value !== index))
-        } else {
-            setImageSelection([...imageSelection, index])
-        }
-    };
+const ImagePicker = ({ images }) => {
+    const addImage = async (imageurl) => {
+        const result = await upload({
+            type: "IMAGE",
+            mimeType: "image/jpeg",
+            url: imageurl,
+            thumbnailUrl: imageurl,
+        });
+        await addNativeElement({
+            type: "IMAGE",
+            ref: result.ref,
+        });
+    }
 
     return (
         <div style={styles.container}>
-            {imgs.map((image, index) => (
+            {images.map((image, index) => (
                 <div
                     key={index}
                     style={{
                         ...styles.imageContainer,
-                        borderColor: imageSelection.includes(index) ? 'blue' : '#ccc',
+                        borderColor: '#ccc',
                     }}
-                    onClick={() => toggleImageSelection(index)}
+                    onClick={() => {
+                        addImage(image)
+                    }}
                 >
-                    <img src={image} alt={`Image ${index+1}`} style={styles.image} />
-                    {imageSelection.includes(index) && (
-                        <div style={styles.checkmarkOverlay}>
-                            ✓
-                        </div>
-                    )}
+                    <img src={image} alt={`Image ${index + 1}`} style={styles.image} />
                 </div>
             ))}
         </div>
